@@ -1,0 +1,7 @@
+ManifestFileVersion: 0
+CRC: 2526156345
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: main.unity3d
+      Dependencies: {}
