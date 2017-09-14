@@ -65,14 +65,13 @@ public class Loading : MonoBehaviour
 	}
 	
 	void Start() {
-		string path = Path.Combine(Application.persistentDataPath, GetPlatformFolderForAssetBundles());
-		StartCoroutine(LoadMain(path + "/main.unity3d"));
+		string path = Path.Combine("file:///"+Application.streamingAssetsPath, GetPlatformFolderForAssetBundles());
+		StartCoroutine(LoadMain(path + "/main.unity3d.data"));
 	}
  
 	//读取一个
 	private IEnumerator LoadMain(string path)
 	{
-		/*
 		WWW www = new WWW(path);
 
 		yield return www;
@@ -83,15 +82,11 @@ public class Loading : MonoBehaviour
 			yield break;
 		}
 
-		www.assetBundle.isStreamedSceneAssetBundle;
+		byte[] data = AES.AESDecrypt (www.bytes);
 
-		UnityEngine.SceneManagement.SceneManager.LoadScene("main");
+		AssetBundle ab = AssetBundle.LoadFromMemory (data);
 
-		//www.assetBundle.Unload(false);
-
-		*/
-
-		AssetBundle ab = AssetBundle.LoadFromFile (path);
+		//AssetBundle ab = AssetBundle.LoadFromFile (path);
 
 		UnityEngine.SceneManagement.SceneManager.LoadScene("main");
 

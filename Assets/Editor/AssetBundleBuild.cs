@@ -39,6 +39,11 @@ public class AssetBundleBuild : Editor
 		string PlatformFolder = GetPlatformFolderForAssetBundles (EditorUserBuildSettings.activeBuildTarget);
 		string path = Path.Combine(kAssetBundlesOutputPath, PlatformFolder);
 
+		// 清空文件夹
+		if (Directory.Exists(path)) {
+			Directory.Delete(path, true);
+		}
+
 		if (!Directory.Exists(path)) {
 			Directory.CreateDirectory(path);
 		}
@@ -49,7 +54,59 @@ public class AssetBundleBuild : Editor
 			return;
 		}
 
+		EncryptFilesRecursively (path);
+
 		Debug.Log("build base ok");
+	}
+
+
+	private static void EncryptFilesRecursively(string path) {
+		// files
+		string[] files = Directory.GetFiles(path);
+		foreach( string file in files) {
+			if (Path.GetExtension (file) == ".unity3d") {
+				EncryptFile (file);
+			}
+		}
+
+		// dirs recusively
+		string[] dirs = Directory.GetDirectories(path);
+		for (int i = 0; i < dirs.Length; i++) {
+			EncryptFilesRecursively(dirs[i]);
+		}
+	}
+
+	private static void EncryptFile(string file) {
+		Debug.Log ("encrypt file:" + file);
+
+		FileStream fs = new FileStream(file, FileMode.Open, FileAccess.ReadWrite);
+
+		int numBytesToRead = (int)fs.Length;
+		int numBytesRead = 0;
+		byte[] readByte = new byte[fs.Length];
+		//读取字节
+		while (numBytesToRead > 0)
+		{
+			// Read may return anything from 0 to numBytesToRead.
+			int n = fs.Read(readByte, numBytesRead, numBytesToRead);
+
+			// Break when the end of the file is reached.
+			if (n == 0)
+				break;
+
+			numBytesRead += n;
+			numBytesToRead -= n;
+		}
+		fs.Close();
+			
+		//加密
+		byte[] newBuff = AES.AESEncrypt(readByte);
+
+		// 保存
+		FileStream cfs = new FileStream(file + ".data", FileMode.Create);
+		cfs.Write(newBuff, 0, newBuff.Length);
+		newBuff = null;
+		cfs.Close();
 	}
 
 	private static void DeleteEmptyFolder(string path) {
