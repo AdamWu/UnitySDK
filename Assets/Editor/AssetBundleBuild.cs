@@ -19,8 +19,8 @@ public class AssetBundleBuild : Editor
 			return "Android";
 		case BuildTarget.iOS:
 			return "iOS";
-		case BuildTarget.WebPlayer:
-			return "WebPlayer";
+		case BuildTarget.WebGL:
+			return "WebGL";
 		case BuildTarget.StandaloneWindows:
 		case BuildTarget.StandaloneWindows64:
 			return "Windows";

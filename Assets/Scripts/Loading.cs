@@ -18,8 +18,8 @@ public class Loading : MonoBehaviour
 			return "Android";
 		case BuildTarget.iOS:
 			return "iOS";
-		case BuildTarget.WebPlayer:
-			return "WebPlayer";
+		case BuildTarget.WebGL:
+			return "WebGL";
 		case BuildTarget.StandaloneWindows:
 		case BuildTarget.StandaloneWindows64:
 			return "Windows";
@@ -35,14 +35,14 @@ public class Loading : MonoBehaviour
 
 	public static string GetPlatformFolderForAssetBundles(RuntimePlatform platform)
 	{
+		Debug.Log ("GetPlatformFolderForAssetBundles " + platform);
 		switch(platform) {
 		case RuntimePlatform.Android:
 			return "Android";
 		case RuntimePlatform.IPhonePlayer:
 			return "iOS";
-		case RuntimePlatform.WindowsWebPlayer:
-		case RuntimePlatform.OSXWebPlayer:
-			return "WebPlayer";
+		case RuntimePlatform.WebGLPlayer:
+			return "WebGL";
 		case RuntimePlatform.WindowsPlayer:
 			return "Windows";
 		case RuntimePlatform.OSXPlayer:
@@ -65,13 +65,21 @@ public class Loading : MonoBehaviour
 	}
 	
 	void Start() {
-		string path = Path.Combine("file:///"+Application.streamingAssetsPath, GetPlatformFolderForAssetBundles());
-		StartCoroutine(LoadMain(path + "/main.unity3d.data"));
+		string path = "";
+		#if !UNITY_EDITOR && UNITY_WEBGL
+		path = Path.Combine (Application.streamingAssetsPath, GetPlatformFolderForAssetBundles ());
+		#else
+		path = Path.Combine ("file:///" + Application.streamingAssetsPath, GetPlatformFolderForAssetBundles ());
+		#endif
+		StartCoroutine (LoadMain (path + "/main.unity3d.data"));
 	}
+
+	
  
 	//读取一个
 	private IEnumerator LoadMain(string path)
 	{
+		Debug.Log ("LoadMain " + path);
 		WWW www = new WWW(path);
 
 		yield return www;
