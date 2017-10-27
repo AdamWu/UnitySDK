@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 public class DebugConsole : MonoBehaviour {
 
+	public bool logEnabled = true;
+
 	//public GUIStyle guiStyle;
 	
 	public class Log {
@@ -35,7 +37,7 @@ public class DebugConsole : MonoBehaviour {
 	private string 		strMem;
 
 	private List<Log> 	m_logs = new List<Log>();
-	private const int LogMaxCount = 25;
+	private const int LogMaxCount = 40;
 
 	void Awake() {
 		DontDestroyOnLoad(gameObject);
@@ -55,6 +57,9 @@ public class DebugConsole : MonoBehaviour {
 	}
 
 	void HandleLog(string msg, string stacktrace, LogType type) {
+		if (!logEnabled)
+			return;
+		
 		//if (type == LogType.Assert || type == LogType.Error || type == LogType.Exception) {
 		m_logs.Add(new Log(msg, stacktrace, type));
 		//}

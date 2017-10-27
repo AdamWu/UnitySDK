@@ -135,7 +135,7 @@ public class Loading : MonoBehaviour
 		byte[] decrypt_data = NativePlugin.Decrypt (encrypt_data);
 
 		AssetBundle ab = AssetBundle.LoadFromMemory (decrypt_data);
-		Array.Clear (encrypt_data, 0, encrypt_data.Length);
+
 		encrypt_data = null;
 		decrypt_data = null;
 
