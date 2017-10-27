@@ -41,8 +41,8 @@ public class AES
 				cs.FlushFinalBlock();
 				cipherBytes = ms.ToArray();//得到加密后的字节数组
 				cs.Close();
-				ms.Close();
 			}
+			ms.Close();
 		}
 		return cipherBytes;
 	}
@@ -64,8 +64,8 @@ public class AES
 			{
 				cs.Read(decryptBytes, 0, decryptBytes.Length);
 				cs.Close();
-				ms.Close();
 			}
+			ms.Close();
 		}
 		return decryptBytes;  ///将字符串后尾的'\0'去掉
 	}
