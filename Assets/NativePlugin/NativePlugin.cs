@@ -6,16 +6,22 @@ using UnityEngine;
 
 public partial class NativePlugin
 {
-	[DllImport("NativePluginCPP", CallingConvention = CallingConvention.StdCall)]
+	#if !UNITY_EDITOR && (UNITY_IPHONE || UNITY_WEBGL)
+	public const string pluginName = "__Internal";
+	#else
+	public const string pluginName = "NativePluginCPP";
+	#endif
+
+	[DllImport(pluginName)]
 	private static extern float TestMultiply(float a, float b);
 
-	[DllImport("NativePluginCPP", CallingConvention = CallingConvention.StdCall)]
+	[DllImport(pluginName)]
 	private static extern int Encrypt(byte[] data, int len, out IntPtr result);
 
-	[DllImport("NativePluginCPP", CallingConvention = CallingConvention.StdCall)]
+	[DllImport(pluginName)]
 	private static extern int Decrypt(byte[] data, int len, out IntPtr result);
 
-	[DllImport("NativePluginCPP", CallingConvention = CallingConvention.StdCall)]
+	[DllImport(pluginName)]
 	private static extern int FreeMem([In] ref IntPtr p);
 
 

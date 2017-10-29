@@ -70,6 +70,12 @@ public class Loading : MonoBehaviour
 	
 	void Awake() {
 
+		text_progress = GameObject.Find ("Canvas/Panel/Text").GetComponent<Text> ();
+		slider_progress = GameObject.Find ("Canvas/Panel/Slider").GetComponent<Slider> ();
+	}
+	
+	void Start() {
+
 		byte[] data = Encoding.Default.GetBytes ("test12345678");
 		byte[] encrypt_data = NativePlugin.Encrypt (data);
 		string str_encrypt = Encoding.Default.GetString (encrypt_data);
@@ -77,11 +83,6 @@ public class Loading : MonoBehaviour
 		string str_decrypt = Encoding.Default.GetString (NativePlugin.Decrypt (encrypt_data));
 		Debug.Log ("decrypt -> " + str_decrypt);
 
-		text_progress = GameObject.Find ("Canvas/Panel/Text").GetComponent<Text> ();
-		slider_progress = GameObject.Find ("Canvas/Panel/Slider").GetComponent<Slider> ();
-	}
-	
-	void Start() {
 		LoadSceneFromAssetBundle (sceneName);
 	}
 
@@ -112,8 +113,10 @@ public class Loading : MonoBehaviour
 		string path = "";
 		#if !UNITY_EDITOR && UNITY_WEBGL
 		path = Path.Combine (Application.streamingAssetsPath, GetPlatformFolderForAssetBundles ());
+		#elif !UNITY_EDITOR && UNITY_ANDROID
+		path = Path.Combine ("jar:file://" + Application.streamingAssetsPath, GetPlatformFolderForAssetBundles ());
 		#else
-		path = Path.Combine ("file:///" + Application.streamingAssetsPath, GetPlatformFolderForAssetBundles ());
+		path = Path.Combine ("file://" + Application.streamingAssetsPath, GetPlatformFolderForAssetBundles ());
 		#endif
 
 		path = path + "/" + name + ".unity3d.data";
