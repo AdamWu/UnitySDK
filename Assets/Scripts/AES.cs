@@ -53,6 +53,7 @@ public class AES
 	/// <returns>返回解密后的明文字符串</returns>
 	public static byte[] AESDecrypt(byte[] showText)
 	{
+		Debug.Log ("AESDecrypt " + showText.Length);
 		byte[] cipherText = showText;
 		SymmetricAlgorithm des = Rijndael.Create();
 		des.Key = Encoding.UTF8.GetBytes(Key);

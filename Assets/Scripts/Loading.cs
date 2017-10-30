@@ -114,7 +114,7 @@ public class Loading : MonoBehaviour
 		#if !UNITY_EDITOR && UNITY_WEBGL
 		path = Path.Combine (Application.streamingAssetsPath, GetPlatformFolderForAssetBundles ());
 		#elif !UNITY_EDITOR && UNITY_ANDROID
-		path = Path.Combine ("jar:file://" + Application.streamingAssetsPath, GetPlatformFolderForAssetBundles ());
+		path = Path.Combine (Application.streamingAssetsPath, GetPlatformFolderForAssetBundles ());
 		#else
 		path = Path.Combine ("file://" + Application.streamingAssetsPath, GetPlatformFolderForAssetBundles ());
 		#endif
@@ -131,6 +131,8 @@ public class Loading : MonoBehaviour
 			_wwww.Dispose();
 			yield break;
 		}
+
+		Debug.Log ("www " + _wwww.bytes);
 
 		byte[] data = AES.AESDecrypt (_wwww.bytes);
 
