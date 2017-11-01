@@ -5,9 +5,6 @@ using System.Text;
 using System.IO;
 using System;
 
-/// <summary>
-/// AES加解密
-/// </summary>
 public class AES
 {
 	private static string Key
@@ -24,11 +21,11 @@ public class AES
 	/// </summary>
 	/// <param name="byteText">明文字符串</param>
 	/// <returns>将加密后的密文转换为Base64编码，以便显示</returns>
-	public static byte[]  AESEncrypt(byte[] byteText)
+	public static byte[]  AESEncrypt(byte[] data)
 	{
 		//分组加密算法
 		SymmetricAlgorithm des = Rijndael.Create();
-		byte[] inputByteArray = byteText;//得到需要加密的字节数组 
+		byte[] inputByteArray = data;//得到需要加密的字节数组 
 		//设置密钥及密钥向量
 		des.Key = Encoding.UTF8.GetBytes(Key);
 		des.IV = _key1;
@@ -51,10 +48,10 @@ public class AES
 	/// </summary>
 	/// <param name="cipherText">密文字符串</param>
 	/// <returns>返回解密后的明文字符串</returns>
-	public static byte[] AESDecrypt(byte[] showText)
+	public static byte[] AESDecrypt(byte[] data)
 	{
-		Debug.Log ("AESDecrypt " + showText.Length);
-		byte[] cipherText = showText;
+		Debug.Log ("AESDecrypt " + data.Length);
+		byte[] cipherText = data;
 		SymmetricAlgorithm des = Rijndael.Create();
 		des.Key = Encoding.UTF8.GetBytes(Key);
 		des.IV = _key1;
