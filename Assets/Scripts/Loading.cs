@@ -12,8 +12,6 @@ using System.Runtime.InteropServices;
 public class Loading : MonoBehaviour
 {
 	public string sceneName="main";
-	private WWW _wwww = null;
-	private AsyncOperation _asyncOp = null;
 	private Text text_progress;
 	private Slider slider_progress;
 	
@@ -70,6 +68,8 @@ public class Loading : MonoBehaviour
 	
 	void Awake() {
 
+		sceneName = SceneLoadManager.Instance.LoadSceneName != null ? SceneLoadManager.Instance.LoadSceneName : sceneName;
+
 		text_progress = GameObject.Find ("Canvas/Panel/Text").GetComponent<Text> ();
 		slider_progress = GameObject.Find ("Canvas/Panel/Slider").GetComponent<Slider> ();
 	}
@@ -86,18 +86,10 @@ public class Loading : MonoBehaviour
 		LoadSceneFromAssetBundle (sceneName);
 	}
 
-	void Update() {
-
-		if (_asyncOp != null) {
-			int progress = (int)(_asyncOp.progress * 100);
-			text_progress.text = string.Format("加载场景{0}%", progress);
-			slider_progress.value = _asyncOp.progress;
-		} else if (_wwww != null) {
-			int progress = (int)(_wwww.progress * 100);
-			text_progress.text = string.Format("下载资源{0}%", progress);
-			slider_progress.value = _wwww.progress;
-		}
-
+	void SetProgress(string str, float progress) {
+		int value = (int)(progress * 100);
+		text_progress.text = string.Format("{0}{1}%", str, value);
+		slider_progress.value = progress;
 	}
 
 
@@ -110,6 +102,9 @@ public class Loading : MonoBehaviour
 	//读取一个
 	private IEnumerator _LoadSceneFromAssetBundle(string name)
 	{
+
+		yield return new WaitForEndOfFrame ();
+
 		string path = "";
 		#if !UNITY_EDITOR && UNITY_WEBGL
 		path = Path.Combine (Application.streamingAssetsPath, GetPlatformFolderForAssetBundles ());
@@ -122,26 +117,37 @@ public class Loading : MonoBehaviour
 		path = path + "/" + name + ".unity3d.data";
 
 		Debug.Log ("LoadMain " + path);
-		_wwww = new WWW(path);
+		WWW www = new WWW(path);
 
-		yield return _wwww;
+		while (!www.isDone) {
+			Debug.Log ("download " + www.progress);
+			SetProgress ("下载资源", www.progress);
+			yield return new WaitForEndOfFrame ();
+		}
 
-		if (_wwww.error != null) {
-			Debug.LogError(_wwww.error);
-			_wwww.Dispose();
+		if (www.error != null) {
+			Debug.LogError(www.error);
+			www.Dispose();
 			yield break;
 		}
 
-		Debug.Log ("www " + _wwww.bytes);
-
-		byte[] data = AES.AESDecrypt (_wwww.bytes);
-
-
+		byte[] data = AES.AESDecrypt (www.bytes);
 		AssetBundle ab = AssetBundle.LoadFromMemory (data);
-
 		data = null;
 
-		_asyncOp =  UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(name);
+		AsyncOperation asyncOp =  UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(name);
+		asyncOp.allowSceneActivation = false;
+		while (asyncOp.progress < 0.9f) {
+			Debug.Log ("load scene " + asyncOp.progress);
+			SetProgress ("加载场景", asyncOp.progress);
+			yield return new WaitForEndOfFrame ();
+		}
+		SetProgress ("加载场景", 1);
+		yield return new WaitForEndOfFrame ();
+		asyncOp.allowSceneActivation = true;
+
+		ab.Unload (false);
+		SceneLoadManager.Instance.LoadSceneComplete();
 
 		yield break;
 	}
