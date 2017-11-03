@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public delegate void OnNotificationDelegate(Notification note);
 
@@ -14,40 +15,43 @@ public class NotificationCenter
         return defaultCenter;
     }
 
-    private OnNotificationDelegate[] listeners = new OnNotificationDelegate[(int)NotificationType.NumMax];
+	private OnNotificationDelegate del;
+	private Dictionary<int, OnNotificationDelegate> listeners = new Dictionary<int, OnNotificationDelegate> ();
 
-    public void AddListener(NotificationType type, OnNotificationDelegate newListenerDelegate) {
-        int typeInt = (int)type;
-        listeners[typeInt] += newListenerDelegate;
+    public void AddListener(int type, OnNotificationDelegate newListenerDelegate) {
+
+		if (!listeners.ContainsKey (type)) {
+			listeners.Add (type, del);
+		}
+		listeners [type] += newListenerDelegate;
     }
 
-    public void RemoveListener(NotificationType type, OnNotificationDelegate listenerDelegate) {
-        int typeInt = (int)type;
-        listeners[typeInt] -= listenerDelegate;
+    public void RemoveListener(int type, OnNotificationDelegate listenerDelegate) {
+ 
+		listeners[type] -= listenerDelegate;
     }
 
     public void PostNotification(Notification note) {
-        int typeInt = (int)note.type;
 
-        if (listeners[typeInt] != null)
-            listeners[typeInt](note);
+		if (listeners[note.type] != null)
+			listeners[note.type](note);
     }
-    public void PostNotification(NotificationType type) { PostNotification(type, null); }
-    public void PostNotification(NotificationType type, object data) { PostNotification(new Notification(type, data)); }
+    public void PostNotification(int type) { PostNotification(type, null); }
+	public void PostNotification(int type, object data) { PostNotification(new Notification(type, data)); }
 }
 
 // Standard notification class.  For specific needs subclass  
 public class Notification
 {
-    public NotificationType type;
+	public int type;
     public object data;
 
-    public Notification(NotificationType type) {
+	public Notification(int type) {
         this.type = type;
         this.data = null;
     }
 
-    public Notification(NotificationType type, object data) {
+	public Notification(int type, object data) {
         this.type = type;
         this.data = data;
     }

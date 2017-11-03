@@ -43,8 +43,6 @@ public class DebugConsole : MonoBehaviour {
 		if (instance == null) {
 			instance = this;
 			DontDestroyOnLoad (gameObject);
-		} else {
-			
 		}
 	}
 
@@ -100,7 +98,6 @@ public class DebugConsole : MonoBehaviour {
 		GUI.skin.label.fontSize = 24;
 		GUI.skin.button.fontSize = 24;
 		GUI.skin.button.margin = new RectOffset (20, 10, 10, 10);
-		GUI.skin.toggle.fontSize = 24;
 
 		GUILayout.Label (strFPS);
 		//GUILayout.Label (strMem);

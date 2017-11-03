@@ -9,6 +9,9 @@ public class PanelMain : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
+
+		NotificationCenter.DefaultCenter ().AddListener ((int)NotificationType.ADD_CUBE, addCube);
+
 		GameObject go = new GameObject ("linerender");
 		LineRenderer lr = go.AddComponent<LineRenderer> ();
 		lr.startWidth = 0.1f;
@@ -31,15 +34,16 @@ public class PanelMain : MonoBehaviour {
 		btn2.onClick.AddListener (delegate {
 			OnBtnSwitch(btn2.gameObject);
 		});
+			
 	}
 	
-	// Update is called once per frame
-	void Update () {
-		
+	void OnDestroy() {
+		NotificationCenter.DefaultCenter ().RemoveListener ((int)NotificationType.ADD_CUBE, addCube);
 	}
 
 	void OnBtnStart(GameObject sender) {
 		Debug.Log ("OnBtnStart");
+		NotificationCenter.DefaultCenter ().PostNotification ((int)NotificationType.ADD_CUBE);
 	}
 
 	void OnBtnSwitch(GameObject sender) {
@@ -50,5 +54,22 @@ public class PanelMain : MonoBehaviour {
 		} else if (sender.name == "2") {
 			SceneLoadManager.Instance.GotoScene ("bigscene");
 		}
+	}
+
+
+	public void addCube(Notification notification) {
+		Debug.Log ("addCube");
+
+		GameObject prefab1 = (GameObject)ResourceManager.Instance.LoadAsset ("Prefabs/Cube", "Cube");
+		GameObject go1 = Instantiate (prefab1, new Vector3(Random.Range(-10, 10), Random.Range(-10, 10), Random.Range(-10, 10)), Quaternion.identity);
+		ResourceManager.Instance.UnloadAsset ("Prefabs/Cube");
+		//GameObject prefab1 = (GameObject)ResourceManager.Instance.LoadAsset ("Prefabs/Test", "Cube");
+		//GameObject go1 = Instantiate (prefab1, new Vector3(Random.Range(-10, 10), Random.Range(-10, 10), Random.Range(-10, 10)), Quaternion.identity);
+
+		ResourceManager.Instance.LoadAssetAsync ("Prefabs/Test", "Cube", delegate(Object obj) {
+			GameObject prefab2 = (GameObject)obj;
+			GameObject go2 = Instantiate (prefab2, new Vector3(Random.Range(-10, 10), Random.Range(-10, 10), Random.Range(-10, 10)), Quaternion.identity);
+			ResourceManager.Instance.UnloadAsset("Prefabs/Test");
+		});
 	}
 }

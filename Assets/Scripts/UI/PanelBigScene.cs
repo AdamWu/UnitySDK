@@ -15,10 +15,11 @@ public class PanelBigScene : MonoBehaviour {
 		});
 	}
 
-
 	void OnBtnExit(GameObject sender) {
 		Debug.Log ("OnBtnExit");
 
 		SceneLoadManager.Instance.GotoScene ("main");
 	}
+
+
 }

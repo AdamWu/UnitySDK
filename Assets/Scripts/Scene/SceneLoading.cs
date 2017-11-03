@@ -9,9 +9,8 @@ using UnityEngine.UI;
 using System.Text;
 using System.Runtime.InteropServices;
  
-public class Loading : MonoBehaviour
+public class SceneLoading : MonoBehaviour
 {
-	public string sceneName="main";
 	private Text text_progress;
 	private Slider slider_progress;
 	
@@ -67,9 +66,6 @@ public class Loading : MonoBehaviour
 	}
 	
 	void Awake() {
-
-		sceneName = SceneLoadManager.Instance.LoadSceneName != null ? SceneLoadManager.Instance.LoadSceneName : sceneName;
-
 		text_progress = GameObject.Find ("Canvas/Panel/Text").GetComponent<Text> ();
 		slider_progress = GameObject.Find ("Canvas/Panel/Slider").GetComponent<Slider> ();
 	}
@@ -83,7 +79,7 @@ public class Loading : MonoBehaviour
 		string str_decrypt = Encoding.Default.GetString (NativePlugin.Decrypt (encrypt_data));
 		Debug.Log ("decrypt -> " + str_decrypt);
 
-		LoadSceneFromAssetBundle (sceneName);
+		LoadSceneFromAssetBundle (SceneLoadManager.Instance.LoadSceneName);
 	}
 
 	void SetProgress(string str, float progress) {
@@ -116,7 +112,7 @@ public class Loading : MonoBehaviour
 
 		path = path + "/" + name + ".unity3d.data";
 
-		Debug.Log ("LoadMain " + path);
+		Debug.Log ("LoadSceneFromAssetBundle " + path);
 		WWW www = new WWW(path);
 
 		while (!www.isDone) {
@@ -132,7 +128,8 @@ public class Loading : MonoBehaviour
 		}
 
 		byte[] data = AES.AESDecrypt (www.bytes);
-		AssetBundle ab = AssetBundle.LoadFromMemory (data);
+		AssetBundle assetBundle = AssetBundle.LoadFromMemory (data);
+		www.Dispose();
 		data = null;
 
 		AsyncOperation asyncOp =  UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(name);
@@ -146,7 +143,7 @@ public class Loading : MonoBehaviour
 		yield return new WaitForEndOfFrame ();
 		asyncOp.allowSceneActivation = true;
 
-		ab.Unload (false);
+		assetBundle.Unload (false);
 		SceneLoadManager.Instance.LoadSceneComplete();
 
 		yield break;
