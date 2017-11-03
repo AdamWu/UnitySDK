@@ -34,6 +34,11 @@ public class PanelMain : MonoBehaviour {
 		btn2.onClick.AddListener (delegate {
 			OnBtnSwitch(btn2.gameObject);
 		});
+		Button btn3 = transform.Find ("Button Scene3").GetComponent<Button> ();
+		btn3.name = "3";
+		btn3.onClick.AddListener (delegate {
+			OnBtnSwitch(btn3.gameObject);
+		});
 			
 	}
 	
@@ -53,6 +58,8 @@ public class PanelMain : MonoBehaviour {
 			SceneLoadManager.Instance.GotoScene ("lightmap");
 		} else if (sender.name == "2") {
 			SceneLoadManager.Instance.GotoScene ("bigscene");
+		} else if (sender.name == "3") {
+			SceneLoadManager.Instance.GotoScene ("modelshow");
 		}
 	}
 
