@@ -41,6 +41,10 @@ public class PanelMain : MonoBehaviour {
 		});
 			
 	}
+
+	void Update() {
+
+	}
 	
 	void OnDestroy() {
 		NotificationCenter.DefaultCenter ().RemoveListener ((int)NotificationType.ADD_CUBE, addCube);
