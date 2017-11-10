@@ -25,9 +25,9 @@ public class CameraRotate : MonoBehaviour
     void Update()
     {
 		if (Target == null) return;
-		if (EventSystem.current.IsPointerOverGameObject()) return;
+		if (EventSystem.current && EventSystem.current.IsPointerOverGameObject()) return;
         
-		if (Input.GetMouseButton (0)) {
+		if (Input.GetMouseButton (1)) {
 
 			angleX += Input.GetAxis ("Mouse X") * xSpeed;
 			angleY -= Input.GetAxis ("Mouse Y") * xSpeed;

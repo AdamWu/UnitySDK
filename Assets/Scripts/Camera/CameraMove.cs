@@ -3,14 +3,12 @@ using System.Collections;
 using UnityEngine.EventSystems;
 
 // move
-public class moveCamera : MonoBehaviour {
-    float delta_x, delta_y, delta_z,speed;
-    public GameObject camera;
-    public Transform taget;
+public class CameraMove : MonoBehaviour {
+    float delta_x, delta_y,speed;
     Quaternion rotation;
     
 	void Start () {
-        delta_x = 1; delta_y = 1; delta_z = 1; speed=0.5f;
+        delta_x = 1; delta_y = 1; speed=0.5f;
     }
 
 	void Update () {
