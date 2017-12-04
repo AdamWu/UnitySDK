@@ -15,8 +15,10 @@ public class CameraRotate : MonoBehaviour
     private float angleX = 0.0f, angleY = 0.0f;  
 
     void Start() {
-		distance = (transform.position - Target.position).magnitude;
-		
+		if (Target) {
+			distance = (transform.position - Target.position).magnitude;
+		}
+
         Vector3 angles = transform.eulerAngles;
         angleX = angles.y;
         angleY = angles.x;

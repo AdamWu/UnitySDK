@@ -6,13 +6,10 @@ public class MeshDeformer : MonoBehaviour {
 
 	public float Hardness = 1f;
 
-	public 
-
 	public bool isDeformed { get; set;}
 
 	Mesh deformingMesh;
 	Vector3[] originalVertices, displacedVertices;
-	Matrix4x4 tm, tmInv;
 
 
 	MeshCollider collider;
@@ -20,9 +17,6 @@ public class MeshDeformer : MonoBehaviour {
 
 	void Start () {
 		isDeformed = false;
-
-		tm.SetTRS (transform.position, transform.rotation, transform.localScale);
-		tmInv = tm.inverse;
 
 		Hardness = Mathf.Max (0.01f, Hardness);
 
@@ -58,6 +52,10 @@ public class MeshDeformer : MonoBehaviour {
 
 		Stopwatch sw = new Stopwatch ();
 		sw.Start ();
+
+
+		Matrix4x4 tm = transform.localToWorldMatrix;
+		Matrix4x4 tmInv = transform.worldToLocalMatrix;
 
 		for (int i = 0; i < displacedVertices.Length; i++) {
 
