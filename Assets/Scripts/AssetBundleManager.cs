@@ -37,7 +37,7 @@ public class AssetBundleManager : Singleton<AssetBundleManager> {
 	static Dictionary<string, LoadedAssetBundle> s_LoadedAssetBundles = new Dictionary<string, LoadedAssetBundle>();
 
 	#region assetbundle downloading
-	static string s_BaseDownloadingURL = Config.CdnURL;
+	static string s_BaseDownloadingURL = Config.CdnUrl;
 
 	static Queue<string> s_ToDownloadAssetBundles = new Queue<string>();
 	static Dictionary<string, WWW> s_DownloadingWWWs = new Dictionary<string, WWW>();

@@ -9,6 +9,8 @@ public class Config {
 
 	public const bool EnableUpdate = false;			// 是否开启自更新
 
-	public const string CdnURL = "http://127.0.0.1:8000/update/AssetBundles/";      //更新资源地址
+	public const string CdnUrl = "http://127.0.0.1:8000/update/AssetBundles/";      //更新资源地址
+
+	public const string HttpUrl = "http://127.0.0.1:8000/update/AssetBundles/";      //更新资源地址
 
 }
