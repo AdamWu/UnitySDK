@@ -45,7 +45,7 @@ public class MeshDeformer : MonoBehaviour {
 		}
 	}
 
-	public void AddDeformingForce (Vector3 point, Vector3 dir, float force) {
+	public void AddDeformingForce (Vector3 pos, Vector3 dir, float force) {
 		//UnityEngine.Debug.Log ("AddDeformingForce " + force);
 
 		isDeformed = true;
@@ -54,25 +54,24 @@ public class MeshDeformer : MonoBehaviour {
 		sw.Start ();
 
 
-		Matrix4x4 tm = transform.localToWorldMatrix;
-		Matrix4x4 tmInv = transform.worldToLocalMatrix;
+		Vector3 pos_local = transform.InverseTransformPoint (pos);
+		Vector3 dir_local = transform.InverseTransformDirection (dir.normalized);
 
 		for (int i = 0; i < displacedVertices.Length; i++) {
 
-			Vector3 p = tm.MultiplyPoint3x4(displacedVertices[i]);
-			//Vector3 p = displacedVertices[i];
+			Vector3 p = displacedVertices[i];
 
-			Vector3 pointToVertex = p - point;
+			Vector3 pointToVertex = p - pos_local;
 
 			//float attenuatedForce = force / (1f + pointToVertex.sqrMagnitude);
 			float attenuatedForce = Mathf.Max(0, force - pointToVertex.magnitude/Hardness);
 
 			if (attenuatedForce > 0) {
 				//p += pointToVertex.normalized * attenuatedForce;
-				p += dir.normalized * attenuatedForce;
+				p += dir_local * attenuatedForce;
 				//displacedVertices[i] += displacedVertices[i].normalized * 0.1f;
 		
-				displacedVertices [i] = tmInv.MultiplyPoint3x4 (p);
+				displacedVertices [i] = p;
 			}
 		}
 
@@ -93,7 +92,7 @@ public class MeshDeformer : MonoBehaviour {
 
 		deformingMesh.vertices = originalVertices;
 		deformingMesh.RecalculateNormals ();
-		NormalSolver.RecalculateNormals(deformingMesh, 30);
+		//NormalSolver.RecalculateNormals(deformingMesh, 30);
 
 		isDeformed = false;
 	}

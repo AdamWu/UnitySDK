@@ -9,6 +9,10 @@ public class MeshDeformerInput : MonoBehaviour {
 
 	private List<MeshForce> meshforces = new List<MeshForce> ();
 
+	void Awake() {
+		Physics.queriesHitBackfaces = true;
+	}
+
 	void Update () {
 			
 		HandleInput();
@@ -109,7 +113,7 @@ public class MeshDeformerInput : MonoBehaviour {
 
 		GUI.skin.label.fontSize = 24;
 		if (GUILayout.Button ("AddForce", GUILayout.Width(120), GUILayout.Height(60))) {
-			AddMeshForce (Vector3.zero, 0.1f);
+			AddMeshForce (Vector3.zero, 1f);
 		}
 	}
 }
