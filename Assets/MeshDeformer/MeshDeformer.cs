@@ -86,6 +86,71 @@ public class MeshDeformer : MonoBehaviour {
 		//UnityEngine.Debug.LogFormat ("using {0}", sw.ElapsedMilliseconds);
 	}
 
+
+	public int FindNearestVertexInTriangle(int triangleIdx, Vector3 wpos) {
+		UnityEngine.Debug.Log ("FindNearestVertexInTriangle " + triangleIdx);
+
+		Vector3 pos_local = transform.InverseTransformPoint (wpos);
+
+		int idx = 0;
+		float dist = float.MaxValue;
+
+		int[] triangles = deformingMesh.triangles;
+		for (int i = 0; i < 3; i++) {
+			int vidx = triangles [triangleIdx * 3 + i];
+			Vector3 offset = originalVertices [vidx] - pos_local;
+			if (offset.sqrMagnitude < dist) {
+				idx = vidx;
+				dist = offset.sqrMagnitude;
+			}
+		}
+
+		return idx;
+	}
+
+
+	public void AddForceAtVertex(int vertexIdx, Vector3 dst) {
+		UnityEngine.Debug.Log ("MoveVertex " + vertexIdx);
+
+		Vector3 dst_local = transform.InverseTransformPoint (dst);
+
+		Vector3 vertex = originalVertices [vertexIdx];
+		Vector3 offset = dst_local - vertex;
+
+		float k = 2f;
+		for (int i = 0; i < originalVertices.Length; i++) {
+
+			float kx = (originalVertices [i] - vertex).sqrMagnitude / k;
+
+			displacedVertices [i] = originalVertices[i] + offset / (1 + kx);
+		}
+
+		deformingMesh.vertices = displacedVertices;
+		//deformingMesh.RecalculateNormals ();
+		NormalSolver.RecalculateNormals(deformingMesh, 30);
+
+	}
+
+	public void MoveVertex(int vertexIdx) {
+		UnityEngine.Debug.Log ("MoveVertex " + vertexIdx);
+	
+		Vector3[] normals = deformingMesh.normals;
+
+		for (int i = 0; i < originalVertices.Length; i++) {
+
+			if (i == vertexIdx) {
+				displacedVertices [i] = originalVertices [i] + normals [i];
+			} else {
+				displacedVertices [i] = originalVertices [i];
+			}
+		}
+
+		deformingMesh.vertices = displacedVertices;
+		//deformingMesh.RecalculateNormals ();
+		NormalSolver.RecalculateNormals(deformingMesh, 30);
+
+	}
+
 	public void ClearForce() {
 		//UnityEngine.Debug.Log ("ClearForce " + isDeformed);
 		if (isDeformed == false) return;
