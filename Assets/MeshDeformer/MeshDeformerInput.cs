@@ -78,7 +78,7 @@ public class MeshDeformerInput : MonoBehaviour {
 		}
 		*/
 
-		if (Input.GetMouseButtonDown (1)) {
+		if (Input.GetMouseButtonDown (0)) {
 			Debug.Log ("mouse down");
 			Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
 			RaycastHit hit;
@@ -87,15 +87,29 @@ public class MeshDeformerInput : MonoBehaviour {
 				MeshDeformer deformer = hit.collider.GetComponent<MeshDeformer> ();
 				if (deformer) {
 					int fidx = hit.triangleIndex;
-					int vidx = deformer.FindNearestVertexInTriangle (fidx, hit.point);
+					Vector3 vertex;
+					int vidx = deformer.FindNearestVertexInTriangle (fidx, hit.point, out vertex);
 
-					GameObject go = new GameObject ();
+					GameObject go = GameObject.CreatePrimitive (PrimitiveType.Sphere);
 					FollowForce followForce = go.AddComponent<FollowForce> ();
 					followForce.SetTargetVertex (deformer, vidx);
 					go.transform.SetParent (transform);
 					go.transform.localRotation = Quaternion.identity;
-					go.transform.localScale = Vector3.one;
+					go.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
 					go.transform.position = hit.point + hit.normal * 0.05f;
+				}
+			}
+		}
+
+		if (Input.GetMouseButtonDown (1)) {
+			Debug.Log ("mouse down");
+			Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+			RaycastHit hit;
+
+			if (Physics.Raycast (inputRay, out hit)) {
+				FollowForce force = hit.collider.GetComponent<FollowForce> ();
+				if (force) {
+					Destroy (force.gameObject);
 				}
 			}
 		}
