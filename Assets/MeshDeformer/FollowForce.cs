@@ -16,7 +16,12 @@ public class FollowForce : MonoBehaviour {
 	MeshDeformer target;
 	int vertexIdx;
 
-	Vector3 lastPos;
+	// 缓存前两帧坐标
+	Vector3[] lastPositons = new Vector3[2]; 
+	int lastPositionsIdx = 0;
+	public Vector3 LastPosition {get {return lastPositons[(lastPositionsIdx+1)%2];}}
+
+	// 上一帧移动方向
 	Vector3 lastMoveDir;
 	public Vector3 LastMoveDir {get{ return lastMoveDir;}}
 
@@ -28,6 +33,8 @@ public class FollowForce : MonoBehaviour {
 	}
 
 	public void SetTargetVertex(MeshDeformer deformer, int vertexIdx) {
+
+		Debug.LogFormat ("SetTargetVertex {0} {1}", deformer.name, vertexIdx);
 
 		this.target = deformer;
 		this.vertexIdx = vertexIdx;
@@ -45,15 +52,15 @@ public class FollowForce : MonoBehaviour {
 
 	void FixedUpdate() {
 
+		Vector3 lastPos = lastPositons[lastPositionsIdx];
 		if (lastPos.Equals (transform.position))
 			return;
 
-
 		Vector3 dir = transform.position - lastPos;
-		//Debug.Log (dir.normalized);
 		lastMoveDir = dir.normalized;
 
-		lastPos = transform.position;
+		lastPositionsIdx = (lastPositionsIdx + 1) % 2;
+		lastPositons [lastPositionsIdx] = transform.position;
 
 		if (target == null)
 			return;

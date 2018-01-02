@@ -68,7 +68,7 @@ public class Pin : MonoBehaviour {
 
 	bool FindVertexToDeformer() {
 
-		Ray inputRay = new Ray (head.transform.position, head.transform.forward);
+		Ray inputRay = new Ray (head.LastPosition, head.transform.forward);
 		RaycastHit hit;
 
 		if (Physics.Raycast (inputRay, out hit)) {
@@ -80,6 +80,7 @@ public class Pin : MonoBehaviour {
 				int fidx = hit.triangleIndex;
 				Vector3 vertex;
 				int vidx = deformer.FindNearestVertexInTriangle (fidx, hit.point, out vertex);
+				Debug.LogFormat ("FindVertexToDeformer {0}", vidx);
 				head.SetTargetVertex (deformer, vidx);
 				return true;
 			}
