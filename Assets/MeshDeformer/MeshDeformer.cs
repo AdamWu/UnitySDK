@@ -48,6 +48,32 @@ public class MeshDeformer : MonoBehaviour {
 		}
 		collider.sharedMesh = deformingMesh;
 
+
+		// 连通区域判定
+		/*
+		Bounds bounds = deformingMesh.bounds;
+		float size = 0.02f;
+		float sizeHalf = size / 2;
+		for (float i = bounds.min.x; i < bounds.max.x+sizeHalf; i += size) {
+			for (float j = bounds.min.y; j < bounds.max.y+sizeHalf; j += size) {
+				for (float k = bounds.min.z; k < bounds.max.z+sizeHalf; k += size) {
+					Vector3 localpos = new Vector3 (i, j, k);
+					Vector3 pos = transform.TransformPoint (localpos);
+
+					if (Physics.CheckSphere(pos, sizeHalf, 1<<LayerMask.NameToLayer("Default"))) {
+						GameObject go = GameObject.CreatePrimitive (PrimitiveType.Sphere);
+						go.layer = LayerMask.NameToLayer ("Ignore Raycast");
+						go.transform.SetParent (transform);
+						go.transform.localRotation = Quaternion.identity;
+						go.transform.localScale = new Vector3(size, size, size);
+						go.transform.position = pos;
+					}
+				}
+			}
+		}
+		*/
+	
+
 		// 质点弹簧初始化
 		int[] triangles = deformingMesh.triangles;
 		for (int i = 0; i < triangles.Length/3; i++) {

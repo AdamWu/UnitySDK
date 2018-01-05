@@ -7,7 +7,6 @@ using System.Collections.Generic;
 /// binding nearest vertex when collide with meshdeformer, and move vertex together
 /// </summary>
 
-
 public delegate void FollowForceSpringMax(); 
 public delegate void FollowForceOnTriggerEnter(Collider collider); 
 
