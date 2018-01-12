@@ -14,14 +14,14 @@ public class MouseSplit : MonoBehaviour
 	
 	public void Update()
 	{
-		if (Input.GetMouseButtonDown(0))
+		if (Input.GetMouseButtonDown(1))
 		{
 			start = Input.mousePosition;
 			
 			started = true;
 		}
 		
-		if (Input.GetMouseButtonUp(0) && started)
+		if (Input.GetMouseButtonUp(1) && started)
 		{
 			end = Input.mousePosition;
 			
