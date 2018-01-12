@@ -17,6 +17,8 @@ public class Pin : MonoBehaviour {
 
 	PinState state = PinState.Out;
 
+	private Vector3 HitPos = Vector3.zero;
+
 	// Use this for initialization
 	void Awake () {
 
@@ -29,19 +31,6 @@ public class Pin : MonoBehaviour {
 			head.ClearTargetVertex();
 			state = PinState.Out;
 		};
-		head.followForceOnTriggerEnter += delegate(Collider collider) {
-			Debug.Log("Pin:head.followForceOnTriggerEnter");
-
-			if (state == PinState.Out) {
-				float dot = Vector3.Dot(head.transform.forward, head.LastMoveDir);
-				if (dot <= 0) {
-					return;
-				}
-				if (FindVertexToDeformer ()) {
-					state = PinState.Deformer;
-				}
-			}
-		};
 	}
 	
 	// Update is called once per frame
@@ -49,6 +38,13 @@ public class Pin : MonoBehaviour {
 	
 		if (state == PinState.Out) {
 			// 碰撞检测接触质点，进行穿刺
+			float dot = Vector3.Dot(head.transform.forward, head.LastMoveDir);
+			if (dot <= 0) {
+				return;
+			}
+			if (FindVertexToDeformer ()) {
+				state = PinState.Deformer;
+			}
 		} else if (state == PinState.Deformer) {
 
 			float dot = Vector3.Dot(head.transform.forward, head.LastMoveDir);
@@ -75,14 +71,20 @@ public class Pin : MonoBehaviour {
 			MeshDeformer deformer = hit.collider.GetComponent<MeshDeformer> ();
 			if (deformer) {
 
-				float dot = Vector3.Dot (head.transform.forward, hit.normal);
+				Vector3 dir = (head.transform.position - hit.point).normalized;
+				float dot = Vector3.Dot (head.transform.forward, dir);
+				//Debug.Log ("dot "+dot);
 
-				int fidx = hit.triangleIndex;
-				Vector3 vertex;
-				int vidx = deformer.FindNearestVertexInTriangle (fidx, hit.point, out vertex);
-				Debug.LogFormat ("FindVertexToDeformer {0}", vidx);
-				head.SetTargetVertex (deformer, vidx);
-				return true;
+				if (dot > 0) {
+	
+					int fidx = hit.triangleIndex;
+					Vector3 vertex;
+					int vidx = deformer.FindNearestVertexInTriangle (fidx, hit.point, out vertex);
+					HitPos = hit.point;
+					Debug.LogFormat ("FindVertexToDeformer {0}", vidx);
+					head.SetTargetVertex (deformer, vidx);
+					return true;
+				}
 			}
 		}
 
@@ -90,6 +92,7 @@ public class Pin : MonoBehaviour {
 	}
 
 	bool ReturnToOut() {
+		/*
 		Ray inputRay = new Ray (head.transform.position, head.transform.forward);
 		RaycastHit hit;
 
@@ -111,6 +114,17 @@ public class Pin : MonoBehaviour {
 				}
 			}
 		}
+		*/
+
+		Vector3 dir = (head.transform.position - HitPos).normalized;
+		float dot = Vector3.Dot (head.transform.forward, dir);
+		Debug.Log ("ReturnToOut check dot "+dot);
+
+		if (dot < 0) {
+			head.ClearTargetVertex ();
+			return true;
+		}
+
 		return false;
 	}
 

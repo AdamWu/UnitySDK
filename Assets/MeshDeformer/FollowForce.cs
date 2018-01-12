@@ -7,10 +7,11 @@ using System.Collections.Generic;
 /// binding nearest vertex when collide with meshdeformer, and move vertex together
 /// </summary>
 
-public delegate void FollowForceSpringMax(); 
-public delegate void FollowForceOnTriggerEnter(Collider collider); 
+public delegate void FollowForceSpringMax();
 
 public class FollowForce : MonoBehaviour {
+
+	public bool bLimitMove = true;
 
 	MeshDeformer target;
 	int vertexIdx;
@@ -25,7 +26,6 @@ public class FollowForce : MonoBehaviour {
 	public Vector3 LastMoveDir {get{ return lastMoveDir;}}
 
 	public FollowForceSpringMax followForceSpingMax;
-	public FollowForceOnTriggerEnter followForceOnTriggerEnter;
 
 	void Awake() {
 		
@@ -67,29 +67,19 @@ public class FollowForce : MonoBehaviour {
 
 		bool bValid = target.AddForceAtVertex (vertexIdx, transform.position);
 
-		if (bValid == false) {
+		if (bValid == true) {
+			
+		} else {
 			// 达到最大形变量
 			if (followForceSpingMax!=null) followForceSpingMax();
+			if (bLimitMove)
+				transform.position = lastPositons[lastPositionsIdx];
 		}
 	}
 
 
 	void OnDestroy() {
 		ClearTargetVertex ();
-	}
-
-
-	void OnTriggerEnter(Collider collider) {
-		Debug.Log ("OnTriggerEnter "+collider.name);
-		followForceOnTriggerEnter (collider);
-	}
-
-	void OnTriggerStay(Collider collider) {
-		//Debug.Log ("OnTriggerStay "+collider.name);
-	}
-
-	void OnTriggerExit(Collider collider) {
-		//Debug.Log ("OnTriggerExit "+collider.name);
 	}
 
 	void OnDrawGizmos() {

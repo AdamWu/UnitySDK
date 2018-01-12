@@ -11,6 +11,9 @@ public class MeshDeformer : MonoBehaviour {
 	// 质点弹簧-最大拉伸量
 	public float kSpringMax = 2f;
 
+	// 软组织最小形变阈值
+	public float kZero = 0.0001f;
+
 	public bool isDeformed { get; set;}
 
 	Mesh deformingMesh;
@@ -24,7 +27,7 @@ public class MeshDeformer : MonoBehaviour {
 
 	bool bVertexForceDirty = false;
 
-	MeshCollider collider;
+	MeshCollider _collider;
 
 
 	void Start () {
@@ -41,42 +44,172 @@ public class MeshDeformer : MonoBehaviour {
 
 		Collider col = GetComponent<Collider> ();
 		if (col && col is MeshCollider) {
-			collider = col as MeshCollider;
+			_collider = col as MeshCollider;
 		} else {
 			if (col != null) Destroy (col);
-			collider = gameObject.AddComponent<MeshCollider> ();
+			_collider = gameObject.AddComponent<MeshCollider> ();
 		}
-		collider.sharedMesh = deformingMesh;
+		_collider.sharedMesh = deformingMesh;
 
+		InitMassSprings ();
+
+	}
+
+	void InitMassSprings() {
+
+		int i, j, k, w;
 
 		// 连通区域判定
-		/*
 		Bounds bounds = deformingMesh.bounds;
 		float size = 0.02f;
 		float sizeHalf = size / 2;
-		for (float i = bounds.min.x; i < bounds.max.x+sizeHalf; i += size) {
-			for (float j = bounds.min.y; j < bounds.max.y+sizeHalf; j += size) {
-				for (float k = bounds.min.z; k < bounds.max.z+sizeHalf; k += size) {
-					Vector3 localpos = new Vector3 (i, j, k);
+		int xNum = Mathf.CeilToInt( bounds.extents.x / size) * 2;
+		int yNum = Mathf.CeilToInt( bounds.extents.y / size) * 2;
+		int zNum = Mathf.CeilToInt( bounds.extents.z / size) * 2;
+		bool [,,] spheres = new bool[xNum,yNum,zNum];
+		Dictionary<int, Vector3> dicSpheres = new Dictionary<int, Vector3> ();
+		for (i = 0; i < xNum; i ++) {
+			for (j = 0; j < yNum; j ++) {
+				for (k = 0; k < zNum; k ++) {
+					Vector3 localpos = bounds.min + new Vector3 (i, j, k) * size;
 					Vector3 pos = transform.TransformPoint (localpos);
 
-					if (Physics.CheckSphere(pos, sizeHalf, 1<<LayerMask.NameToLayer("Default"))) {
+					if (Physics.CheckSphere(pos, sizeHalf)) {
+
+
 						GameObject go = GameObject.CreatePrimitive (PrimitiveType.Sphere);
-						go.layer = LayerMask.NameToLayer ("Ignore Raycast");
-						go.transform.SetParent (transform);
+						Destroy (go.GetComponent<SphereCollider> ());
+						//go.transform.SetParent (transform);
 						go.transform.localRotation = Quaternion.identity;
 						go.transform.localScale = new Vector3(size, size, size);
 						go.transform.position = pos;
+
+
+						spheres [i, j, k] = true;
+						dicSpheres.Add (i << 20 | j << 10 | k, localpos);
 					}
 				}
 			}
 		}
-		*/
-	
+
+
+		Dictionary<int, List<int>> dicSphere2Vertices = new Dictionary<int, List<int>> ();
+		for (i = 0; i < originalVertices.Length; i++) {
+			Vector3 v = originalVertices[i];
+		
+			Dictionary<int, Vector3>.Enumerator it = dicSpheres.GetEnumerator ();
+			while (it.MoveNext()) {
+				int id = it.Current.Key;
+				Vector3 pos = it.Current.Value;
+
+				Vector3 offset = v - pos;
+				if (offset.magnitude <= size) {
+					if (!dicSphere2Vertices.ContainsKey (id)) {
+						dicSphere2Vertices.Add(id, new List<int>());
+					}
+					dicSphere2Vertices [id].Add (i);
+					break;
+				}
+			}
+		}
+
+		// 依次查找最近连通区域 plane-z
+		for (i = 0; i < xNum; i++) {
+			for (j = 0; j < yNum; j++) {
+				for (k = 0; k < zNum; k++) {
+					// 无连通
+					if (!spheres[i, j, k]) continue;
+
+					// 连通区域无质点
+					int id = i << 20 | j << 10 | k;
+					if (!dicSphere2Vertices.ContainsKey (id))
+						continue;
+
+					// 查找相连的质点
+					for (w = k+1; w < zNum; w++) {
+						if (!spheres [i, j, w]) {
+							break;
+						}
+
+						int id2 = i << 20 | j << 10 | w;
+						if (!dicSphere2Vertices.ContainsKey (id2))
+							continue;
+
+						// 找到相连质点区域
+						k = w + 1;
+						UnityEngine.Debug.LogFormat("Found {0} {1}", id, id2);
+						break;
+					}
+				}
+			}
+		}
+			
+		// 依次查找最近连通区域 plane-y
+		for (j = 0; j < yNum; j++) {
+			for (k = 0; k < zNum; k++) {
+				for (i = 0; i < xNum; i++) {
+					// 无连通
+					if (!spheres[i, j, k]) continue;
+
+					// 连通区域无质点
+					int id = i << 20 | j << 10 | k;
+					if (!dicSphere2Vertices.ContainsKey (id))
+						continue;
+
+					// 查找相连的质点
+					for (w = i+1; w < xNum; w++) {
+						if (!spheres [w, j, k]) {
+							break;
+						}
+
+						int id2 = w << 20 | j << 10 | k;
+						if (!dicSphere2Vertices.ContainsKey (id2))
+							continue;
+
+						// 找到相连质点区域
+						i = w + 1;
+						UnityEngine.Debug.LogFormat("Found {0} {1}", id, id2);
+						break;
+					}
+				}
+			}
+		}
+
+		// 依次查找最近连通区域 plane-x
+		for (i = 0; i < xNum; i++) {
+			for (k = 0; k < zNum; k++) {
+				for (j = 0; j < yNum; j++) {
+					// 无连通
+					if (!spheres[i, j, k]) continue;
+
+					// 连通区域无质点
+					int id = i << 20 | j << 10 | k;
+					if (!dicSphere2Vertices.ContainsKey (id))
+						continue;
+
+					// 查找相连的质点
+					for (w = j+1; w < yNum; w++) {
+						if (!spheres [i, w, k]) {
+							break;
+						}
+
+						int id2 = i << 20 | w << 10 | k;
+						if (!dicSphere2Vertices.ContainsKey (id2))
+							continue;
+
+						// 找到相连质点区域
+						UnityEngine.Debug.LogFormat("Found {0} {1}", id, id2);
+						j = w + 1;
+						break;
+					}
+				}
+			}
+		}
+
 
 		// 质点弹簧初始化
 		int[] triangles = deformingMesh.triangles;
-		for (int i = 0; i < triangles.Length/3; i++) {
+		for (i = 0; i < triangles.Length/3; i++) {
 			int vidx1 = triangles [i * 3];
 			int vidx2 = triangles [i * 3+1];
 			int vidx3 = triangles [i * 3+2];
@@ -104,6 +237,24 @@ public class MeshDeformer : MonoBehaviour {
 			if (!MassSprings[vidx3].ContainsKey(vidx2)) MassSprings[vidx3].Add(vidx2, dst23);
 		}
 
+		// 同一连通区域的质点
+		Dictionary<int, List<int>>.Enumerator iter = dicSphere2Vertices.GetEnumerator ();
+		while (iter.MoveNext()) {
+			int id = iter.Current.Key;
+			List<int> list = iter.Current.Value;
+
+			for (i = 0; i < list.Count; i++) {
+				int vid1 = list [i];
+				for (j = i + 1; j < list.Count; j++) {
+					int vid2 = list [j];
+					if (!MassSprings [vid1].ContainsKey (vid2)) {
+						float dist = (originalVertices [vid1] - originalVertices [vid2]).magnitude;
+						MassSprings[vid1].Add(vid2, dist);
+						MassSprings[vid2].Add(vid1, dist);
+					}
+				}
+			}
+		}
 	}
 
 
@@ -111,6 +262,8 @@ public class MeshDeformer : MonoBehaviour {
 		if (bVertexForceDirty) {
 			ResetVertices ();
 			UpdateVertices ();
+
+			UpdateCollision ();
 		}
 		bVertexForceDirty = false;
 	}
@@ -204,7 +357,9 @@ public class MeshDeformer : MonoBehaviour {
 			int idx = iter.Current.Key;
 			float value = iter.Current.Value;
 
-			float k = (dst_local - originalVertices [idx]).magnitude / edge [idx];
+			Vector3 v_new = originalVertices [idx] + delta_s / (1 + value / kViscosity);
+
+			float k = (dst_local - v_new).magnitude / value;
 
 			if (k >= kSpringMax) {
 				bSpringMax = true;
@@ -292,11 +447,14 @@ public class MeshDeformer : MonoBehaviour {
 					int idx = iter.Current.Key;
 					float value = iter.Current.Value;
 
-					int key = idx;//vidx > idx ? vidx | (idx << 8) : (vidx << 8) | idx;
+					int key = vidx > idx ? vidx | (idx << 16) : (vidx << 16) | idx;
 					if (mark.Contains (key))
 						continue;
 
 					Vector3 v = delta / (1 + value / kViscosity);
+
+					if (v.magnitude <= 0.0001f) continue;
+					
 					if (!dic_VertexForce.ContainsKey(idx) && offsets[idx, forceIdx].sqrMagnitude < v.sqrMagnitude) {
 						offsets[idx, forceIdx] = v;
 						 
@@ -307,7 +465,7 @@ public class MeshDeformer : MonoBehaviour {
 				iter = edge.GetEnumerator ();
 				while (iter.MoveNext ()) {
 					int idx = iter.Current.Key;
-					int key = idx;//vidx > idx ? vidx | (idx << 8) : (vidx << 8) | idx;
+					int key = vidx > idx ? vidx | (idx << 16) : (vidx << 16) | idx;
 					mark.Add (key);
 				}
 			}
@@ -321,55 +479,26 @@ public class MeshDeformer : MonoBehaviour {
 
 
 		// 计算各顶点偏移量
-		float[] positive = new float[dic_VertexForce.Count];
-		float[] negative = new float[dic_VertexForce.Count];
 		for (int i = 0; i < offsets.GetLength(0); i ++) {
 			Vector3 result = Vector3.zero;
 		
 			// 计算改顶点最终形变量（x,y,z）
 			for (int j = 0; j < 3; j++) {
 
-				int numPositive = 0;
-				int numNegative = 0;
+				float positive = 0f;
+				float negative = 0f;
 
 				for (int k = 0; k < dic_VertexForce.Count; k++) {
 					Vector3 offset = offsets [i, k];
-					float v = offsets [i, k] [j];
-					if ( v > 0) {
-						positive[numPositive] = v;
-						numPositive++;
-					} else {
-						negative[numNegative] = v;
-						numNegative++;
+					float v = offset [j];
+					if ( v > 0 && v > positive) {
+						positive = v;
+					} else if (v < 0 && v < negative) {
+						negative = v;
 					}
 				}
 
-				if (numNegative == 0) {
-					for (int k = 0; k < numPositive; k++) {
-						if (result [j] < positive [k]) {
-							result [j] = positive [k];
-						}
-					}
-					continue;
-				}
-
-				if (numPositive == 0) {
-					for (int k = 0; k < numNegative; k++) {
-						if (result [j] > negative [k]) {
-							result [j] = negative [k];
-						}
-					}
-					continue;
-				}
-
-				for (int k = 0; k < numPositive; k++) {
-					for (int w = 0; w < numNegative; w++) {
-						float v = positive [k] + negative [w];
-						if (Mathf.Abs (result [j]) < Mathf.Abs (v)) {
-							result [j] = v;
-						}
-					}
-				}
+				result [j] = positive + negative;
 			}
 
 			// 最终结果保存在第一个位置
@@ -379,16 +508,17 @@ public class MeshDeformer : MonoBehaviour {
 		// 计算出最新的顶点位置
 		for (int i = 0; i < originalVertices.Length; i++) {
 			displacedVertices [i] = originalVertices [i] + offsets [i, 0];
-			
 		}
-
-
 
 		deformingMesh.vertices = displacedVertices;
 		//deformingMesh.RecalculateNormals ();
 		NormalSolver.RecalculateNormals(deformingMesh, 30);
+	
+	}
 
-
+	void UpdateCollision() {
+		//UnityEngine.Debug.Log ("UpdateCollision");
+		_collider.sharedMesh = deformingMesh;
 	}
 
 	public void ClearForce() {
