@@ -2,18 +2,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum PinState {
+public enum KnifeState {
 	Out,			// 寻找接触点
 	Deformer,		// 变形
 	Puncture,		// 穿刺
 	Pass,			// 穿透
 }
 
-public class Pin : MonoBehaviour {
+public class Knife : MonoBehaviour {
 
-	FollowForce head, tail;
+	FollowForce head;
 
-	PinState state = PinState.Out;
+	KnifeState state = KnifeState.Out;
 
 	private Vector3 HitPos = Vector3.zero;
 
@@ -21,29 +21,28 @@ public class Pin : MonoBehaviour {
 	void Awake () {
 
 		head = transform.Find ("head").GetComponent<FollowForce> ();
-		tail = transform.Find ("tail").GetComponent<FollowForce> ();
 
 		head.followForceSpingMax += delegate() {
 			Debug.Log("Pin:head.followForceSpingMax");
 
 			head.ClearTargetVertex();
-			state = PinState.Out;
+			state = KnifeState.Out;
 		};
 	}
 	
 	// Update is called once per frame
 	void FixedUpdate () {
 	
-		if (state == PinState.Out) {
+		if (state == KnifeState.Out) {
 			// 碰撞检测接触质点，进行穿刺
 			float dot = Vector3.Dot(head.transform.forward, head.LastMoveDir);
 			if (dot <= 0) {
 				return;
 			}
 			if (FindVertexToDeformer ()) {
-				state = PinState.Deformer;
+				state = KnifeState.Deformer;
 			}
-		} else if (state == PinState.Deformer) {
+		} else if (state == KnifeState.Deformer) {
 
 			float dot = Vector3.Dot(head.transform.forward, head.LastMoveDir);
 			if (dot > 0) {
@@ -51,11 +50,11 @@ public class Pin : MonoBehaviour {
 			}
 
 			if (ReturnToOut ()) {
-				state = PinState.Out;
+				state = KnifeState.Out;
 			}
-		} else if (state == PinState.Puncture) {
+		} else if (state == KnifeState.Puncture) {
 			// 正在进行穿刺
-		} else if (state == PinState.Pass) {
+		} else if (state == KnifeState.Pass) {
 		
 		}
 	}
@@ -90,30 +89,6 @@ public class Pin : MonoBehaviour {
 	}
 
 	bool ReturnToOut() {
-		/*
-		Ray inputRay = new Ray (head.transform.position, head.transform.forward);
-		RaycastHit hit;
-
-		if (Physics.Raycast (inputRay, out hit)) {
-			MeshDeformer deformer = hit.collider.GetComponent<MeshDeformer> ();
-			if (deformer) {
-				int fidx = hit.triangleIndex;
-				Vector3 vertex;
-				int vidx = deformer.FindNearestVertexInTriangle (fidx, hit.point, out vertex);
-
-				Vector3 wpos = deformer.transform.TransformPoint (vertex);
-				Vector3 dir = (head.transform.position - hit.point).normalized;
-				//Debug.Log (dir);
-				float cos = Vector3.Dot (head.transform.forward, dir);
-
-				if(cos <= 0f) {
-					head.ClearTargetVertex ();
-					return true;
-				}
-			}
-		}
-		*/
-
 		Vector3 dir = (head.transform.position - HitPos).normalized;
 		float dot = Vector3.Dot (head.transform.forward, dir);
 		Debug.Log ("ReturnToOut check dot "+dot);
