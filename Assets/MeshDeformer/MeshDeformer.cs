@@ -6,15 +6,23 @@ using System.Collections.Generic;
 public class MeshDeformer : MonoBehaviour {
 
 	// 软组织粘性系数
-	public float kViscosity = 5f;
+	[SerializeField]
+	public float kViscosity = 1f;
 
 	// 质点弹簧-最大拉伸量
-	public float kSpringMax = 2f;
+	[SerializeField]
+	private float kSpringMax = 2f;	
+
+	// 连通区域最小单位
+	[SerializeField]
+	public float kConnectAreaSize = 0.02f;
 
 	// 软组织最小形变阈值
-	public float kZero = 0.0001f;
+	[SerializeField]
+	public float kThresholdZero = 0.0001f;
 
 	public bool isDeformed { get; set;}
+
 
 	Mesh deformingMesh;
 	Vector3[] originalVertices, displacedVertices;
@@ -61,29 +69,27 @@ public class MeshDeformer : MonoBehaviour {
 
 		// 连通区域判定
 		Bounds bounds = deformingMesh.bounds;
-		float size = 0.02f;
-		float sizeHalf = size / 2;
-		int xNum = Mathf.CeilToInt( bounds.extents.x / size) * 2;
-		int yNum = Mathf.CeilToInt( bounds.extents.y / size) * 2;
-		int zNum = Mathf.CeilToInt( bounds.extents.z / size) * 2;
+		int xNum = Mathf.CeilToInt( bounds.extents.x / kConnectAreaSize) * 2;
+		int yNum = Mathf.CeilToInt( bounds.extents.y / kConnectAreaSize) * 2;
+		int zNum = Mathf.CeilToInt( bounds.extents.z / kConnectAreaSize) * 2;
+		float sphereSize = kConnectAreaSize * transform.lossyScale.x;
+		float sphereSizeHalf = sphereSize / 2f;
 		bool [,,] spheres = new bool[xNum,yNum,zNum];
 		Dictionary<int, Vector3> dicSpheres = new Dictionary<int, Vector3> ();
 		for (i = 0; i < xNum; i ++) {
 			for (j = 0; j < yNum; j ++) {
 				for (k = 0; k < zNum; k ++) {
-					Vector3 localpos = bounds.min + new Vector3 (i, j, k) * size;
+					Vector3 localpos = bounds.min + new Vector3 (i, j, k) * kConnectAreaSize;
 					Vector3 pos = transform.TransformPoint (localpos);
 
-					if (Physics.CheckSphere(pos, sizeHalf)) {
-
-
+					if (Physics.CheckSphere(pos, sphereSizeHalf/2)) {
+						/*
 						GameObject go = GameObject.CreatePrimitive (PrimitiveType.Sphere);
 						Destroy (go.GetComponent<SphereCollider> ());
-						//go.transform.SetParent (transform);
 						go.transform.localRotation = Quaternion.identity;
-						go.transform.localScale = new Vector3(size, size, size);
+						go.transform.localScale = new Vector3(sphereSize, sphereSize, sphereSize);
 						go.transform.position = pos;
-
+						*/
 
 						spheres [i, j, k] = true;
 						dicSpheres.Add (i << 20 | j << 10 | k, localpos);
@@ -98,19 +104,23 @@ public class MeshDeformer : MonoBehaviour {
 			Vector3 v = originalVertices[i];
 		
 			Dictionary<int, Vector3>.Enumerator it = dicSpheres.GetEnumerator ();
+			bool bFound = false;
 			while (it.MoveNext()) {
 				int id = it.Current.Key;
 				Vector3 pos = it.Current.Value;
 
 				Vector3 offset = v - pos;
-				if (offset.magnitude <= size) {
+				if (offset.magnitude <= kConnectAreaSize) {
 					if (!dicSphere2Vertices.ContainsKey (id)) {
 						dicSphere2Vertices.Add(id, new List<int>());
 					}
 					dicSphere2Vertices [id].Add (i);
+					bFound = true;
 					break;
 				}
 			}
+
+			UnityEngine.Debug.Assert (bFound, "vertex not in area "+i);
 		}
 
 		// 依次查找最近连通区域 plane-z
@@ -453,7 +463,7 @@ public class MeshDeformer : MonoBehaviour {
 
 					Vector3 v = delta / (1 + value / kViscosity);
 
-					if (v.magnitude <= 0.0001f) continue;
+					if (v.magnitude <= kThresholdZero) continue;
 					
 					if (!dic_VertexForce.ContainsKey(idx) && offsets[idx, forceIdx].sqrMagnitude < v.sqrMagnitude) {
 						offsets[idx, forceIdx] = v;
