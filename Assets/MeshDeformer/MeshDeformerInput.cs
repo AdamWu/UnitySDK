@@ -84,7 +84,7 @@ public class MeshDeformerInput : MonoBehaviour {
 			RaycastHit hit;
 
 			if (Physics.Raycast (inputRay, out hit)) {
-				MeshDeformer deformer = hit.collider.GetComponent<MeshDeformer> ();
+				SoftBody deformer = hit.collider.GetComponent<SoftBody> ();
 				if (deformer) {
 					int fidx = hit.triangleIndex;
 					Vector3 vertex;
@@ -95,7 +95,7 @@ public class MeshDeformerInput : MonoBehaviour {
 					followForce.SetTargetVertex (deformer, vidx);
 					go.transform.SetParent (transform);
 					go.transform.localRotation = Quaternion.identity;
-					go.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+					//go.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 					go.transform.position = hit.point + hit.normal * 0.05f;
 				}
 			}

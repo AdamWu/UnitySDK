@@ -13,7 +13,7 @@ public class FollowForce : MonoBehaviour {
 
 	public bool bLimitMove = true;
 
-	MeshDeformer target;
+	SoftBody target;
 	int vertexIdx;
 
 	// 缓存前两帧坐标
@@ -31,7 +31,7 @@ public class FollowForce : MonoBehaviour {
 		
 	}
 
-	public void SetTargetVertex(MeshDeformer deformer, int vertexIdx) {
+	public void SetTargetVertex(SoftBody deformer, int vertexIdx) {
 
 		Debug.LogFormat ("SetTargetVertex {0} {1}", deformer.name, vertexIdx);
 

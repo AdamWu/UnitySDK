@@ -1,0 +1,24 @@
+ManifestFileVersion: 0
+CRC: 1708485506
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: modelshow.unity3d
+      Dependencies: {}
+    Info_1:
+      Name: lightmap.unity3d
+      Dependencies:
+        Dependency_0: prefabs/cube.unity3d
+    Info_2:
+      Name: prefabs/test.unity3d
+      Dependencies: {}
+    Info_3:
+      Name: bigscene.unity3d
+      Dependencies: {}
+    Info_4:
+      Name: main.unity3d
+      Dependencies:
+        Dependency_0: prefabs/cube.unity3d
+    Info_5:
+      Name: prefabs/cube.unity3d
+      Dependencies: {}

@@ -63,17 +63,31 @@ public class MeshDeformer : MonoBehaviour {
 
 	}
 
+	public void SetMesh(Mesh mesh) {
+		GetComponent<MeshFilter> ().mesh = mesh;
+		deformingMesh = mesh;
+		originalVertices = deformingMesh.vertices;
+		displacedVertices = new Vector3[originalVertices.Length];
+		for (int i = 0; i < originalVertices.Length; i++) {
+			displacedVertices[i] = originalVertices[i];
+		}
+
+		_collider.sharedMesh = deformingMesh;
+
+		UpdateMassSprings ();
+	}
+
 	void InitMassSprings() {
 
 		int i, j, k, w;
 
 		// 连通区域判定
 		Bounds bounds = deformingMesh.bounds;
-		int xNum = Mathf.CeilToInt( bounds.extents.x / kConnectAreaSize) * 2;
-		int yNum = Mathf.CeilToInt( bounds.extents.y / kConnectAreaSize) * 2;
-		int zNum = Mathf.CeilToInt( bounds.extents.z / kConnectAreaSize) * 2;
-		float sphereSize = kConnectAreaSize * transform.lossyScale.x;
-		float sphereSizeHalf = sphereSize / 2f;
+		int xNum = Mathf.CeilToInt( bounds.extents.x / kConnectAreaSize) * 2 + 1;
+		int yNum = Mathf.CeilToInt( bounds.extents.y / kConnectAreaSize) * 2 + 1;
+		int zNum = Mathf.CeilToInt( bounds.extents.z / kConnectAreaSize) * 2 + 1;
+		float areaSize = kConnectAreaSize * transform.lossyScale.x;
+		float areaSizeHalf = areaSize / 2f;
 		bool [,,] spheres = new bool[xNum,yNum,zNum];
 		Dictionary<int, Vector3> dicSpheres = new Dictionary<int, Vector3> ();
 		for (i = 0; i < xNum; i ++) {
@@ -82,14 +96,14 @@ public class MeshDeformer : MonoBehaviour {
 					Vector3 localpos = bounds.min + new Vector3 (i, j, k) * kConnectAreaSize;
 					Vector3 pos = transform.TransformPoint (localpos);
 
-					if (Physics.CheckSphere(pos, sphereSizeHalf/2)) {
+					if (Physics.CheckBox(pos, new Vector3(areaSizeHalf,areaSizeHalf,areaSizeHalf))) {
 						/*
-						GameObject go = GameObject.CreatePrimitive (PrimitiveType.Sphere);
-						Destroy (go.GetComponent<SphereCollider> ());
+						GameObject go = GameObject.CreatePrimitive (PrimitiveType.Cube);
+						DestroyImmediate (go.GetComponent<Collider> ());
 						go.transform.localRotation = Quaternion.identity;
-						go.transform.localScale = new Vector3(sphereSize, sphereSize, sphereSize);
+						go.transform.localScale = new Vector3(areaSize, areaSize, areaSize);
 						go.transform.position = pos;
-						*/
+						//*/
 
 						spheres [i, j, k] = true;
 						dicSpheres.Add (i << 20 | j << 10 | k, localpos);
@@ -103,117 +117,17 @@ public class MeshDeformer : MonoBehaviour {
 		for (i = 0; i < originalVertices.Length; i++) {
 			Vector3 v = originalVertices[i];
 		
-			Dictionary<int, Vector3>.Enumerator it = dicSpheres.GetEnumerator ();
-			bool bFound = false;
-			while (it.MoveNext()) {
-				int id = it.Current.Key;
-				Vector3 pos = it.Current.Value;
+			Vector3 offset = v - bounds.min;
 
-				Vector3 offset = v - pos;
-				if (offset.magnitude <= kConnectAreaSize) {
-					if (!dicSphere2Vertices.ContainsKey (id)) {
-						dicSphere2Vertices.Add(id, new List<int>());
-					}
-					dicSphere2Vertices [id].Add (i);
-					bFound = true;
-					break;
-				}
+			int x = Mathf.CeilToInt (offset.x/kConnectAreaSize);
+			int y = Mathf.CeilToInt (offset.y/kConnectAreaSize);
+			int z = Mathf.CeilToInt (offset.z/kConnectAreaSize);
+			int id = (x << 20) | (y << 10) | z;
+
+			if (!dicSphere2Vertices.ContainsKey (id)) {
+				dicSphere2Vertices.Add(id, new List<int>());
 			}
-
-			UnityEngine.Debug.Assert (bFound, "vertex not in area "+i);
-		}
-
-		// 依次查找最近连通区域 plane-z
-		for (i = 0; i < xNum; i++) {
-			for (j = 0; j < yNum; j++) {
-				for (k = 0; k < zNum; k++) {
-					// 无连通
-					if (!spheres[i, j, k]) continue;
-
-					// 连通区域无质点
-					int id = i << 20 | j << 10 | k;
-					if (!dicSphere2Vertices.ContainsKey (id))
-						continue;
-
-					// 查找相连的质点
-					for (w = k+1; w < zNum; w++) {
-						if (!spheres [i, j, w]) {
-							break;
-						}
-
-						int id2 = i << 20 | j << 10 | w;
-						if (!dicSphere2Vertices.ContainsKey (id2))
-							continue;
-
-						// 找到相连质点区域
-						k = w + 1;
-						UnityEngine.Debug.LogFormat("Found {0} {1}", id, id2);
-						break;
-					}
-				}
-			}
-		}
-			
-		// 依次查找最近连通区域 plane-y
-		for (j = 0; j < yNum; j++) {
-			for (k = 0; k < zNum; k++) {
-				for (i = 0; i < xNum; i++) {
-					// 无连通
-					if (!spheres[i, j, k]) continue;
-
-					// 连通区域无质点
-					int id = i << 20 | j << 10 | k;
-					if (!dicSphere2Vertices.ContainsKey (id))
-						continue;
-
-					// 查找相连的质点
-					for (w = i+1; w < xNum; w++) {
-						if (!spheres [w, j, k]) {
-							break;
-						}
-
-						int id2 = w << 20 | j << 10 | k;
-						if (!dicSphere2Vertices.ContainsKey (id2))
-							continue;
-
-						// 找到相连质点区域
-						i = w + 1;
-						UnityEngine.Debug.LogFormat("Found {0} {1}", id, id2);
-						break;
-					}
-				}
-			}
-		}
-
-		// 依次查找最近连通区域 plane-x
-		for (i = 0; i < xNum; i++) {
-			for (k = 0; k < zNum; k++) {
-				for (j = 0; j < yNum; j++) {
-					// 无连通
-					if (!spheres[i, j, k]) continue;
-
-					// 连通区域无质点
-					int id = i << 20 | j << 10 | k;
-					if (!dicSphere2Vertices.ContainsKey (id))
-						continue;
-
-					// 查找相连的质点
-					for (w = j+1; w < yNum; w++) {
-						if (!spheres [i, w, k]) {
-							break;
-						}
-
-						int id2 = i << 20 | w << 10 | k;
-						if (!dicSphere2Vertices.ContainsKey (id2))
-							continue;
-
-						// 找到相连质点区域
-						UnityEngine.Debug.LogFormat("Found {0} {1}", id, id2);
-						j = w + 1;
-						break;
-					}
-				}
-			}
+			dicSphere2Vertices [id].Add (i);
 		}
 
 
@@ -259,11 +173,47 @@ public class MeshDeformer : MonoBehaviour {
 					int vid2 = list [j];
 					if (!MassSprings [vid1].ContainsKey (vid2)) {
 						float dist = (originalVertices [vid1] - originalVertices [vid2]).magnitude;
-						MassSprings[vid1].Add(vid2, dist);
-						MassSprings[vid2].Add(vid1, dist);
+						//MassSprings[vid1].Add(vid2, dist);
+						//MassSprings[vid2].Add(vid1, dist);
 					}
 				}
 			}
+		}
+	}
+
+
+	void UpdateMassSprings() {
+		UnityEngine.Debug.Log ("UpdateMassSprings!");
+
+		MassSprings.Clear ();
+		// 质点弹簧初始化
+		int[] triangles = deformingMesh.triangles;
+		for (int i = 0; i < triangles.Length/3; i++) {
+			int vidx1 = triangles [i * 3];
+			int vidx2 = triangles [i * 3+1];
+			int vidx3 = triangles [i * 3+2];
+			Vector3 v1 = originalVertices [vidx1];
+			Vector3 v2 = originalVertices [vidx2];
+			Vector3 v3 = originalVertices [vidx3];
+			float dst12 = (v2 - v1).magnitude;
+			float dst13 = (v3 - v1).magnitude;
+			float dst23 = (v3 - v2).magnitude;
+
+			if (!MassSprings.ContainsKey (vidx1)) {
+				MassSprings.Add (vidx1, new Dictionary<int, float> ());
+			}
+			if (!MassSprings.ContainsKey (vidx2)) {
+				MassSprings.Add (vidx2, new Dictionary<int, float> ());
+			}
+			if (!MassSprings.ContainsKey (vidx3)) {
+				MassSprings.Add (vidx3, new Dictionary<int, float> ());
+			}
+			if (!MassSprings[vidx1].ContainsKey(vidx2)) MassSprings[vidx1].Add(vidx2, dst12);
+			if (!MassSprings[vidx1].ContainsKey(vidx3)) MassSprings[vidx1].Add(vidx3, dst13);
+			if (!MassSprings[vidx2].ContainsKey(vidx1)) MassSprings[vidx2].Add(vidx1, dst12);
+			if (!MassSprings[vidx2].ContainsKey(vidx3)) MassSprings[vidx2].Add(vidx3, dst23);
+			if (!MassSprings[vidx3].ContainsKey(vidx1)) MassSprings[vidx3].Add(vidx1, dst13);
+			if (!MassSprings[vidx3].ContainsKey(vidx2)) MassSprings[vidx3].Add(vidx2, dst23);
 		}
 	}
 
@@ -405,7 +355,7 @@ public class MeshDeformer : MonoBehaviour {
 
 	void UpdateVertices() {
 
-		//UnityEngine.Debug.Log ("Update Vertices");
+		UnityEngine.Debug.Log ("Update Vertices");
 
 		Stopwatch sw = new Stopwatch ();
 		sw.Start ();
@@ -521,8 +471,8 @@ public class MeshDeformer : MonoBehaviour {
 		}
 
 		deformingMesh.vertices = displacedVertices;
-		//deformingMesh.RecalculateNormals ();
-		NormalSolver.RecalculateNormals(deformingMesh, 30);
+		deformingMesh.RecalculateNormals ();
+		//NormalSolver.RecalculateNormals(deformingMesh, 30);
 	
 	}
 

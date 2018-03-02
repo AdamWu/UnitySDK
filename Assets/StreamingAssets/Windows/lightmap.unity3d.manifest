@@ -1,0 +1,15 @@
+ManifestFileVersion: 0
+CRC: 3814965557
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 234e7775843f1ac015a90b3e7a001498
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 31d6cfe0d16ae931b73c59d7e0c089c0
+HashAppended: 0
+ClassTypes: []
+Assets:
+- Assets/Scenes/lightmap.unity
+Dependencies:
+- D:/UnitySDK/Assets/StreamingAssets/Windows/prefabs/cube.unity3d

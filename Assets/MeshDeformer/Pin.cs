@@ -66,7 +66,7 @@ public class Pin : MonoBehaviour {
 		RaycastHit hit;
 
 		if (Physics.Raycast (inputRay, out hit)) {
-			MeshDeformer deformer = hit.collider.GetComponent<MeshDeformer> ();
+			SoftBody deformer = hit.collider.GetComponent<SoftBody> ();
 			if (deformer) {
 
 				Vector3 dir = (head.transform.position - hit.point).normalized;
